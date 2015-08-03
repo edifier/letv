@@ -1,0 +1,6 @@
+走起的步骤(有问题可以联系wangxin8@letv.com)
+
+1.安装node.js
+2.将config文件和app.js文件复制到node.exe同级目录下
+3.修改config/config.js本地目录配置
+4.通过node.exe运行app.js文件
