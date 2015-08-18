@@ -14,9 +14,13 @@ module.exports = {
             rewrite: function (filename, req) {
 
                 var reg = /\/.*_pay\/.+\/(.+\.js)$/;
-
                 if (reg.test(filename)) {
                     return filename.replace(reg, '/pay/src/js/' + RegExp.$1);
+                }
+
+                var $reg = /\/.*pay\/.+\/(.+\.js)$/;
+                if ($reg.test(filename)) {
+                    return filename.replace($reg, '/pay/src/js/' + RegExp.$1);
                 }
 
                 return filename;
@@ -29,16 +33,20 @@ module.exports = {
             rewrite: function (filename, req) {
 
                 var reg = /\/.*_pay\/.+\/(.+\.css)$/;
-
                 if (reg.test(filename)) {
                     return filename.replace(reg, '/pay/src/css/' + RegExp.$1);
+                }
+
+                var $reg = /\/.*pay\/.+\/(.+\.css)$/;
+                if ($reg.test(filename)) {
+                    return filename.replace($reg, '/pay/src/css/' + RegExp.$1);
                 }
 
                 return filename;
             }
         },
         {
-            name: 'test.letv.com',
+            name: 't.letv.com',
             root: 'E:/static',
             proxy_pass: 'http://10.154.250.38:9998/'
         }

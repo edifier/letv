@@ -6,11 +6,12 @@ var fs = require('fs');
 var mime = require('./config/mime');
 var config = require('./config/config');
 
-var less = require('less');
-
 var httpProxy = require('http-proxy');
 
 var proxy = httpProxy.createProxyServer();
+
+//browser-side require() the node way
+var browserify = require('browserify');
 
 proxy.on('error', function (err) {
     console.log('proxy error...');
@@ -41,26 +42,9 @@ var app = {
 
         var extname = PATH.extname(filename).toLowerCase();
 
-        var readbleExts = ['.js', '.css', '.less'];
+        var readbleExts = ['.js', '.css'];
 
         if (readbleExts.indexOf(extname) != -1) {
-            if (extname == '.less') {
-                fs.open(filename, 'r', function (err, fd) {
-                    fs.readFile(filename, 'utf-8', function (err, data) {
-                        less.render(data, function (err, css) {
-                            if (err) {
-                                console.error(err);
-                                return false;
-                            }
-                            data = css.css;
-                            res.writeHead(200, {'content-type': contentType});
-                            res.end(data);
-                            fs.close(fd);
-                        });
-                    });
-                });
-                return false;
-            }
             fs.open(filename, 'r', function (err, fd) {
                 if (err) {
                     if (filename == originFile) {
@@ -89,61 +73,82 @@ var app = {
 
                     }
                 } else {
-                    fs.readFile(filename, function (err, data) {
-                        if (err) {
-                            app.proxyTo(req, res, serverConfig);
-                        } else {
-                            var charset = 'utf-8';
-                            if (data.toString(charset).indexOf('�') != -1) {
-                                charset = 'gbk';
+                    if (!(/.*_rjs\.js/gi.test(filename))) {
+                        fs.readFile(filename, function (err, data) {
+                            if (err) {
+                                app.proxyTo(req, res, serverConfig);
+                            } else {
+                                var charset = 'utf-8';
+                                if (data.toString(charset).indexOf('�') != -1) {
+                                    charset = 'gbk';
+                                }
+                                contentType = contentType + ';charset=' + charset;
+                                res.writeHead(200, {'content-type': contentType});
+                                res.end(data, 'binary');
+                                fs.close(fd);
                             }
-                            contentType = contentType + ';charset=' + charset;
-                            res.writeHead(200, {'content-type': contentType});
-                            res.end(data, 'binary');
-                            fs.close(fd);
-                        }
-                    });
+                        });
+                    } else {
+                        var b = browserify();
+                        b.add(filename);
+                        b.bundle(function () {
+                            var code = arguments[1];
+                            if (code) {
+                                var charset = 'utf-8';
+                                if (code.toString(charset).indexOf('�') != -1) {
+                                    charset = 'gbk';
+                                }
+                                contentType = contentType + ';charset=' + charset;
+                                res.writeHead(200, {'content-type': contentType});
+                                res.end(code, 'binary');
+                                fs.close(fd);
+                            } else {
+                                app.proxyTo(req, res, serverConfig);
+                            }
+
+                        });
+                    }
                 }
             });
         } else {
-            fs.open( filename, 'r', function ( err, fd ) {
+            fs.open(filename, 'r', function (err, fd) {
                 var stream;
-                if ( err ) {
-                    if ( filename == originFile ) {
-                        app.proxyTo( req, res, serverConfig );
+                if (err) {
+                    if (filename == originFile) {
+                        app.proxyTo(req, res, serverConfig);
                     } else {
-                        fs.open( originFile, 'r', function ( err, fd ) {
-                            if ( err ) {
-                                app.proxyTo( req, res, serverConfig );
+                        fs.open(originFile, 'r', function (err, fd) {
+                            if (err) {
+                                app.proxyTo(req, res, serverConfig);
                             } else {
-                                res.writeHead( 200, { 'content-type' : contentType } );
+                                res.writeHead(200, {'content-type': contentType});
 
-                                stream = fs.createReadStream( filename );
-                                stream.on( 'data', function ( data ) {
-                                    res.write( data );
-                                } );
+                                stream = fs.createReadStream(filename);
+                                stream.on('data', function (data) {
+                                    res.write(data);
+                                });
 
-                                stream.on( 'end', function () {
+                                stream.on('end', function () {
                                     res.end();
-                                    fs.close( fd );
-                                } );
+                                    fs.close(fd);
+                                });
                             }
-                        } );
+                        });
                     }
                 } else {
-                    res.writeHead( 200, { 'content-type' : contentType } );
-                    stream = fs.createReadStream( filename );
-                    stream.on( 'data', function ( data ) {
-                        res.write( data );
-                    } );
+                    res.writeHead(200, {'content-type': contentType});
+                    stream = fs.createReadStream(filename);
+                    stream.on('data', function (data) {
+                        res.write(data);
+                    });
 
-                    stream.on( 'end', function () {
+                    stream.on('end', function () {
                         res.end();
-                        fs.close( fd );
-                    } );
+                        fs.close(fd);
+                    });
                 }
 
-            } );
+            });
         }
     },
 
@@ -177,9 +182,9 @@ var app = {
             return true;
         });
 
-        if ( !serverConfig ) {
-            res.writeHead( 500, { 'content-type' : 'text/plain' } );
-            res.end( 'no server' );
+        if (!serverConfig) {
+            res.writeHead(500, {'content-type': 'text/plain'});
+            res.end('no server');
             return;
         }
 
@@ -191,14 +196,14 @@ var app = {
         var urlInfo = app.parseUrl(req.url);
         var pathname = urlInfo.pathname;
 
-        if ( typeof serverConfig.rewrite == 'function' ) {
-            pathname = serverConfig.rewrite( pathname, req );
+        if (typeof serverConfig.rewrite == 'function') {
+            pathname = serverConfig.rewrite(pathname, req);
         }
 
         urlInfo.extname = PATH.extname(urlInfo.pathname);
 
-        if ( !mime[ urlInfo.extname ] ) {
-            app.proxyTo( req, res, serverConfig );
+        if (!mime[urlInfo.extname]) {
+            app.proxyTo(req, res, serverConfig);
             return;
         }
 
