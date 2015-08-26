@@ -1,47 +1,47 @@
 /*
  * author wangxin8@letv.com
- * 将对象装换为字符串:jsonToQuery{a:1，b:2} == 'a=1&b=2';
+ * 将对象转换为字符串:jsonToQuery{a:1，b:2} == 'a=1&b=2';
  */
+var ns = require('../nameSpace.js');
 
-function  jsonToQuery(JSON, isEncode) {
+module.exports = ns.register('pay.jsonToQuery', function () {
 
-    var _fdata = function (data, isEncode) {
+    var _fdata = function (data, isDecode) {
         data = data == null ? '' : data;
         data = data.toString();
-        if (isEncode) {
+        if (isDecode) {
             return encodeURIComponent(data);
         } else {
             return data;
         }
     };
 
-    var _Qstring = [];
+    return function (JSON, isDecode) {
 
-    if (typeof JSON == "object") {
-        for (var k in JSON) {
-            if (k === '$nullName') {
-                _Qstring = _Qstring.concat(JSON[k]);
-                continue;
-            }
-            if (JSON[k] instanceof Array) {
-                for (var i = 0, len = JSON[k].length; i < len; i++) {
-                    _Qstring.push(k + "=" + _fdata(JSON[k][i], isEncode));
+        var _Qstring = [];
+
+        if (typeof JSON == "object") {
+            for (var k in JSON) {
+                if (k === '$nullName') {
+                    _Qstring = _Qstring.concat(JSON[k]);
+                    continue;
                 }
-            } else {
-                if (typeof JSON[k] != 'function') {
-                    _Qstring.push(k + "=" + _fdata(JSON[k], isEncode));
+                if (JSON[k] instanceof Array) {
+                    for (var i = 0, len = JSON[k].length; i < len; i++) {
+                        _Qstring.push(k + "=" + _fdata(JSON[k][i], isDecode));
+                    }
+                } else {
+                    if (typeof JSON[k] != 'function') {
+                        _Qstring.push(k + "=" + _fdata(JSON[k], isDecode));
+                    }
                 }
             }
         }
-    }
 
-    if (_Qstring.length) {
-        return _Qstring.join("&");
-    } else {
-        return "";
+        if (_Qstring.length) {
+            return _Qstring.join("&");
+        } else {
+            return "";
+        }
     }
-};
-
-if ( typeof module === "object" && module && typeof module.exports === "object" ) {
-    module.exports = jsonToQuery;
-}
+});

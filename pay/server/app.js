@@ -91,9 +91,10 @@ var app = {
                     } else {
                         var b = browserify();
                         b.add(filename);
-                        b.bundle(function () {
-                            var code = arguments[1];
-                            if (code) {
+                        b.bundle(function (err, code) {
+                            if (err) {
+                                app.proxyTo(req, res, serverConfig);
+                            }else{
                                 var charset = 'utf-8';
                                 if (code.toString(charset).indexOf('�') != -1) {
                                     charset = 'gbk';
@@ -102,10 +103,7 @@ var app = {
                                 res.writeHead(200, {'content-type': contentType});
                                 res.end(code, 'binary');
                                 fs.close(fd);
-                            } else {
-                                app.proxyTo(req, res, serverConfig);
                             }
-
                         });
                     }
                 }
@@ -195,10 +193,6 @@ var app = {
 
         var urlInfo = app.parseUrl(req.url);
         var pathname = urlInfo.pathname;
-
-        if (typeof serverConfig.rewrite == 'function') {
-            pathname = serverConfig.rewrite(pathname, req);
-        }
 
         urlInfo.extname = PATH.extname(urlInfo.pathname);
 
