@@ -1,27 +1,34 @@
-//公共方法引入
-var getType = require('../core/base/getType.js');
-var jsonToQuery = require('../core/base/jsonToQuery.js');
+//使用jquery
+var jQuery = require('../core/base/jquery-1.7.1.js');
+var jsonToQuery = require('../core/base/json/jsonToQuery.js');
+var queryToJson = require('../core/base/json/queryToJson.js');
 
-if (getType(jQuery) != 'object') {
-    var jQuery = require('../core/jquery-2.0.3.js');
-}
+var jsonToStr = require('../core/base/json/jsonToStr.js');
+var strToJson = require('../core/base/json/strToJson.js');
+
+//这里的引用用来做测试
+var URL = require('../core/base/util/URL.js');
 
 (function ($) {
 
-    //使用jquery
     $('body').ready(function () {
-
         $('#testBtn').click(function () {
-
-            var o = eval('('+$('#textarea').val()+')');
-
-            if (getType(o) != 'object') {
-                alert('输入的不是对象');
-                return false;
+            try {
+                var o = strToJson($('#textarea').val());
+                $('#textarea').val(jsonToQuery(o));
+            } catch (e) {
+                console.log(e);
+                alert('this is not a object');
             }
+        });
 
-            $('#textarea').val(jsonToQuery(o));
+        $('#reset').click(function () {
+            var o = $('#textarea').val();
+            $('#textarea').val(jsonToStr(queryToJson(o)));
         });
     });
+
+    //测试log
+    console.log(URL('http://abc.com/a/b/c.php?a=1&b=2#a=1').setParam('a', 'abc').setHash('a', 67889).setHash('a1', 444444).valueOf());
 
 })(jQuery);
