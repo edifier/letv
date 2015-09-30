@@ -7,6 +7,8 @@
 
     if (window.letv === undefined) {
         window.letv = {};
+    }else{
+        window.letv = new Object(letv);
     }
 
     letv.bossPlatform = {

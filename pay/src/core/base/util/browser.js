@@ -1,5 +1,5 @@
 /**
- * 浏览器版本检测
+ * 浏览器版本检测(区别于ua.js，主要判断IE6-版本)
  * @author wangxin8@letv.com
  * @example
  * browser.IE = true;
@@ -78,8 +78,7 @@ module.exports = ns.register('pay.browser', function(){
 		'CHROME': /chrome\/([\d.]*)/.test(ua),
 		'IPAD':/\(ipad/i.test(ua),
 		'IPHONE':/\(iphone/i.test(ua),
-		'ITOUCH':/\(itouch/i.test(ua),
-		'MOBILE':/mobile/i.test(ua)
+		'ITOUCH':/\(itouch/i.test(ua)
 	};
 	return ret;
 });
