@@ -3,12 +3,10 @@
  * 申请letv.bossPlatform的命名空间
  */
 
-(function (window) {
+(function (window, undefined) {
 
-    if (window.letv === void 0) {
+    if (window.letv === undefined) {
         window.letv = {};
-    } else {
-        window.letv = new Object(letv);
     }
 
     letv.bossPlatform = {

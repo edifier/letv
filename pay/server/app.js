@@ -8,14 +8,10 @@ var config = require('./config/config');
 
 var httpProxy = require('http-proxy');
 
-var proxy = httpProxy.createProxyServer();
-
 //browser-side require() the node way
 var browserify = require('browserify');
-
-proxy.on('error', function (err) {
-    console.log('proxy error...');
-});
+var trace = require('./proxy/trace');
+var mok_proxy = require('./proxy/proxy');
 
 var app = {
 
@@ -94,7 +90,7 @@ var app = {
                         b.bundle(function (err, code) {
                             if (err) {
                                 app.proxyTo(req, res, serverConfig);
-                            }else{
+                            } else {
                                 var charset = 'utf-8';
                                 if (code.toString(charset).indexOf('�') != -1) {
                                     charset = 'gbk';
@@ -157,7 +153,7 @@ var app = {
             res.end('not found: no proxy_pass_server');
         }
         try {
-            proxy.web(req, res, {
+            this.proxy.web(req, res, {
                 target: serverConfig.proxy_pass
             });
         } catch (e) {
@@ -192,9 +188,6 @@ var app = {
         }
 
         var urlInfo = app.parseUrl(req.url);
-        var pathname = urlInfo.pathname;
-
-        urlInfo.extname = PATH.extname(urlInfo.pathname);
 
         if (!mime[urlInfo.extname]) {
             app.proxyTo(req, res, serverConfig);
@@ -217,13 +210,21 @@ var app = {
         }
 
         this.server.on('clientError', function (err, socket) {
-            console.log(new Date());
-            console.log(err);
-            console.log(err.stack);
+            trace.error(new Date());
+            trace.error(err);
+            trace.error(err.stack);
             socket.destroy();
         });
 
-        console.log('node has been run! listening on', config.port || 80);
+        trace.ok('node has been run! listening on ' + config.port || 80 + '.');
+
+        this.proxy = httpProxy.createProxyServer();
+
+        this.proxy.on('error', function (err) {
+            console.log('proxy error...');
+        });
+
+        mok_proxy.start(config.proxy_conf);
     }
 };
 
